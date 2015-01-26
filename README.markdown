@@ -4,6 +4,11 @@ A pure-Python implementation of
 [Basho's bitcask](https://github.com/basho/basho_docs/blob/master/source/data/bitcask-intro.pdf?raw=true)
 key-value store.
 
+## License
+
+[GNU General Public License version
+3](http://www.gnu.org/licenses/gpl-3.0.html)
+
 ## Current Status
 
 This is the current feature implementation status:
