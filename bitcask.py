@@ -29,6 +29,8 @@ HEADER_STRUCT = Struct('>iIHI')
 HEADER_SIZE = 4 + 4 + 2 + 4  # crc + timestamp + key_size + value_size
 Hint = namedtuple('Hint', ['file_id', 'value_size', 'value_position',
                            'timestamp'])
+TOMBSTONE = 'bitcask_tombstone'
+TOMBSTONE_LENGTH = len(TOMBSTONE)
 
 
 def pack_data(key, value):
@@ -64,13 +66,26 @@ def read_hint_from_data_file(fobj):
     # TODO: test corrupted data (struct can't unpack)
     crc, timestamp, key_size, value_size = HEADER_STRUCT.unpack(header)
     key = fobj.read(key_size)
-    if header == '':
+    if key == '':
         raise RuntimeError()
 
     value_position = fobj.tell()
-    fobj.seek(value_size, 1)  # whence=1 => relative position = current
-    # TODO: check CRC
+    value = fobj.read(value_size)
+    if value[:TOMBSTONE_LENGTH] == TOMBSTONE:
+        value_size = None
+    # TODO: check CRC: crc32(header[4:] + value) == crc?
     return timestamp, value_position, value_size, key
+
+def write_data_entry(fobj, key, value, flush):
+    data, value_size, timestamp = pack_data(key, value)
+
+    fobj.seek(0, 2)  # whence=2 => relative position = EOF
+    fobj.write(data)
+    if flush:
+        fobj.flush()
+
+    value_position = fobj.tell() - value_size
+    return value_position, value_size, timestamp
 
 
 class Bitcask(MutableMapping):
@@ -96,22 +111,20 @@ class Bitcask(MutableMapping):
             except RuntimeError:
                 break
             else:
-                self.__keydir[key] = Hint(file_id, value_size, value_position,
-                                          timestamp)
+                # if None, key was deleted (tombstone)
+                if value_size is not None:
+                    self.__keydir[key] = Hint(file_id, value_size,
+                                              value_position, timestamp)
+                elif key in self.__keydir:
+                    del self.__keydir[key]
         fobj.seek(0)
 
     def __setitem__(self, key, value):
         """Append pair entry to active file, update keydir and hint file"""
 
-        fobj = self.__fobj
-        data, value_size, timestamp = pack_data(key, value)
-
-        fobj.seek(0, 2)  # whence=2 => relative position = EOF
-        fobj.write(data)
-        if self.flush:
-            self.__fobj.flush()
-
-        value_position = self.__fobj.tell() - value_size
+        value_position, value_size, timestamp = write_data_entry(self.__fobj,
+                                                                 key, value,
+                                                                 self.flush)
         hint = Hint(self.__fobj.name, value_size, value_position, timestamp)
         self.__keydir[key] = hint
 
@@ -126,10 +139,8 @@ class Bitcask(MutableMapping):
         return fobj.read(hint.value_size)
 
     def __delitem__(self, key):
-        raise NotImplementedError()
-
-    def clear(self):
-        raise NotImplementedError()
+        del self.__keydir[key]
+        write_data_entry(self.__fobj, key, TOMBSTONE, self.flush)
 
     def __len__(self):
         return len(self.__keydir)

@@ -15,7 +15,7 @@ This is the current feature implementation status:
 
 - [x] Get
 - [x] Set
-- [ ] Delete
+- [x] Delete
 - [ ] Create/read hint file
 - [ ] Merge old files
 - [ ] Rotation of data files
