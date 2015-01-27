@@ -56,7 +56,7 @@ class TestBitcask(unittest.TestCase):
         value = b'some value'
 
         kv_store = Bitcask(temp_file.name)
-        kv_store.set(key, value)
+        kv_store[key] = value
         kv_store.close()
 
         timestamp = int(time.time())
@@ -83,7 +83,7 @@ class TestBitcask(unittest.TestCase):
         for key, value in keys_values:
             data, _, _ = pack_data(key, value)
             packed_data += data
-            kv_store.set(key, value)
+            kv_store[key] = value
         kv_store.close()
 
         with open(temp_file.name, 'rb') as fobj:
@@ -103,14 +103,14 @@ class TestBitcask(unittest.TestCase):
         for key, value in keys_values[:middle]:
             data, _, _ = pack_data(key, value)
             packed_data += data
-            kv_store.set(key, value)
+            kv_store[key] = value
         kv_store.close()
 
         kv_store = Bitcask(temp_file.name)
         for key, value in keys_values[middle:]:
             data, _, _ = pack_data(key, value)
             packed_data += data
-            kv_store.set(key, value)
+            kv_store[key] = value
         kv_store.close()
 
         with open(temp_file.name, 'rb') as fobj:
@@ -135,13 +135,13 @@ class TestBitcask(unittest.TestCase):
         # Check every key-value pair using bitcask read API
         kv_store = Bitcask(temp_file.name)
         for key, value in kv_data.items():
-            self.assertEqual(kv_store.get(key), value)
+            self.assertEqual(kv_store[key], value)
 
         # test KeyError for non-existing keys
         unexisting_keys = [uuid.uuid4().bytes for x in range(KV_COUNT)]
         for key in unexisting_keys:
             with self.assertRaises(KeyError):
-                kv_store.get(key)
+                kv_store[key]
 
         kv_store.close()
 
@@ -156,23 +156,21 @@ class TestBitcask(unittest.TestCase):
         keys = []
         for i in range(KV_COUNT):
             key, value = uuid.uuid4().bytes, random_string(VALUE_LENGTH)
-            kv_store.set(key, value)
+            kv_store[key] = value
             keys.append(key)
 
         # Rewrite every value
         data = {}
         for key in keys:
             new_value = random_string(VALUE_LENGTH)
-            kv_store.set(key, new_value)
+            kv_store[key] = new_value
             data[key] = new_value
 
         # Check every key-value pair using bitcask read API
         for key, value in data.items():
-            self.assertEqual(kv_store.get(key), value)
+            self.assertEqual(kv_store[key], value)
 
         kv_store.close()
-
-    # TODO: use Python mapping API instead of .get/.set methods
 
     # TODO: test MAXKEYSIZE (16 bits) and MAXVALSIZE (32 bits)
     # TODO: test MAXOFFSET = 16#7fffffffffffffff (max 63-bit unsigned)

@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pybitcask. If not, see <http://www.gnu.org/licenses/>.
 
-from collections import namedtuple
+from collections import MutableMapping, namedtuple
 from struct import Struct
 from time import time
 from zlib import crc32
@@ -73,7 +73,7 @@ def read_hint_from_data_file(fobj):
     return timestamp, value_position, value_size, key
 
 
-class Bitcask:
+class Bitcask(MutableMapping):
     def __init__(self, filename):
         # TODO: add read-write option (default = read-only)
         # TODO: add flush option (default = ?)
@@ -100,7 +100,7 @@ class Bitcask:
                                           timestamp)
         fobj.seek(0)
 
-    def set(self, key, value):
+    def __setitem__(self, key, value):
         """Append pair entry to active file, update keydir and hint file"""
 
         fobj = self.__fobj
@@ -117,13 +117,30 @@ class Bitcask:
 
         # TODO: update hint file
 
-    def get(self, key):
+    def __getitem__(self, key):
         """Get hint from keydir and load data from disk"""
 
         hint = self.__keydir[key]
         fobj = self.__fobj
         fobj.seek(hint.value_position)
         return fobj.read(hint.value_size)
+
+    def __delitem__(self, key):
+        raise NotImplementedError()
+
+    def clear(self):
+        raise NotImplementedError()
+
+    def __len__(self):
+        raise NotImplementedError()
+
+    def __iter__(self):
+        raise NotImplementedError()
+
+    def __contains__(self):
+        raise NotImplementedError()
+
+    has_key = __contains__
 
     def close(self):
         """Close active file"""
