@@ -142,9 +142,6 @@ class Bitcask(MutableMapping):
         del self.__keydir[key]
         write_data_entry(self.__fobj, key, TOMBSTONE, self.flush)
 
-    def clear(self):
-        raise NotImplementedError()
-
     def __len__(self):
         return len(self.__keydir)
 

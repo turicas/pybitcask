@@ -270,6 +270,28 @@ class TestBitcask(unittest.TestCase):
 
         kv_store.close()
 
+    def test_clear(self):
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file.close()
+        self.files_to_delete.append(temp_file.name)
+
+        kv_store = Bitcask(temp_file.name)
+
+        # Generate random key-value pairs and write them to Bitcask
+        for i in range(KV_COUNT):
+            key, value = uuid.uuid4().bytes, random_string(VALUE_LENGTH)
+            kv_store[key] = value
+
+        self.assertEqual(len(kv_store), KV_COUNT)
+        kv_store.clear()
+        self.assertEqual(len(kv_store), 0)
+        kv_store.close()
+
+        # Re-open and check keys again
+        kv_store = Bitcask(temp_file.name)
+        self.assertEqual(len(kv_store), 0)
+        kv_store.close()
+
 
     # TODO: test MAXKEYSIZE (16 bits) and MAXVALSIZE (32 bits)
     # TODO: test MAXOFFSET = 16#7fffffffffffffff (max 63-bit unsigned)
