@@ -32,8 +32,10 @@ from bitcask import Bitcask, pack_data
 VALUE_LENGTH = 2 ** 10
 KV_COUNT = 10 ** 3
 
+
 def random_string(size=1048576):  # default size is 1MB
     return os.urandom(size)
+
 
 class TestBitcask(unittest.TestCase):
 
@@ -62,8 +64,8 @@ class TestBitcask(unittest.TestCase):
         timestamp = int(time.time())
         key_size = len(key)
         value_size = len(value)
-        data = struct.pack('>IHI', timestamp, key_size, value_size) + key + \
-               value
+        data = struct.pack('>IHI', timestamp, key_size, value_size)
+        data += key + value
         crc = zlib.crc32(data)
         expected_result = struct.pack('>i', crc) + data
 
@@ -291,7 +293,6 @@ class TestBitcask(unittest.TestCase):
         kv_store = Bitcask(temp_file.name)
         self.assertEqual(len(kv_store), 0)
         kv_store.close()
-
 
     # TODO: test MAXKEYSIZE (16 bits) and MAXVALSIZE (32 bits)
     # TODO: test MAXOFFSET = 16#7fffffffffffffff (max 63-bit unsigned)

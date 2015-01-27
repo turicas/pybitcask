@@ -58,6 +58,7 @@ def pack_data(key, value):
     entry = SECOND_STRUCT.pack(crc32(data)) + data
     return entry, value_size, timestamp
 
+
 def read_hint_from_data_file(fobj):
     header = fobj.read(HEADER_SIZE)
     if header == '':
@@ -75,6 +76,7 @@ def read_hint_from_data_file(fobj):
         value_size = None
     # TODO: check CRC: crc32(header[4:] + value) == crc?
     return timestamp, value_position, value_size, key
+
 
 def write_data_entry(fobj, key, value, flush):
     data, value_size, timestamp = pack_data(key, value)
@@ -106,15 +108,13 @@ class Bitcask(MutableMapping):
 
         while True:
             try:
-                timestamp, value_position, value_size, key = \
-                        read_hint_from_data_file(fobj)
+                timestamp, vpos, vsize, key = read_hint_from_data_file(fobj)
             except RuntimeError:
                 break
             else:
                 # if None, key was deleted (tombstone)
-                if value_size is not None:
-                    self.__keydir[key] = Hint(file_id, value_size,
-                                              value_position, timestamp)
+                if vsize is not None:
+                    self.__keydir[key] = Hint(file_id, vsize, vpos, timestamp)
                 elif key in self.__keydir:
                     del self.__keydir[key]
         fobj.seek(0)
