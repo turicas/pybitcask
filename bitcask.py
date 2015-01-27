@@ -132,13 +132,13 @@ class Bitcask(MutableMapping):
         raise NotImplementedError()
 
     def __len__(self):
-        raise NotImplementedError()
+        return len(self.__keydir)
 
     def __iter__(self):
-        raise NotImplementedError()
+        return (key for key in self.__keydir)
 
-    def __contains__(self):
-        raise NotImplementedError()
+    def __contains__(self, key):
+        return key in self.__keydir
 
     has_key = __contains__
 
