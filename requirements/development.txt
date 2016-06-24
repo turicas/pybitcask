@@ -1,3 +1,9 @@
+-e production.txt
+
+pytest
+ipdb
+
+
 nose
 coverage
 yanc
