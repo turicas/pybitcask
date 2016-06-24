@@ -161,3 +161,22 @@ than we actually need. To solve this problem there is a merging mechanism.
   incremented by, for example, the size of an deleted item) and when this item
   hits a threshould, the merging process should start automatically.
 - Tombstone should be written as 1-bit value on data file
+
+
+## Running Basho's Bitcask (in Erlang)
+
+```
+git clone https://github.com/basho/bitcask.git
+cd bitcask
+./rebar get-deps
+./rebar compile
+./rebar shell
+```
+
+Now play with it:
+
+```erlang
+Bc = bitcask:open("/tmp/mycask", [read_write]).
+bitcask:put(Bc, <<"otherkey">>, <<"othervalue">>).
+bitcask:delete(Bc, <<"mykey">>).
+```
